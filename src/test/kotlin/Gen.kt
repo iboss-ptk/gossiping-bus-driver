@@ -9,5 +9,5 @@ fun Gen.Companion.busDriver() =
     }
 
 fun Gen.Companion.busDrivers() =
-    Gen.busDriver().let { Gen.set(it) }
+    Gen.busDriver().let { Gen.list(it) }
 
