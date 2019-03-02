@@ -2,11 +2,9 @@ fun main(args: Array<String>) {
     println("hello")
 }
 
-fun findFirstFullySpreadGossipStop(input: String): String =
-    if (input.lines().count() < 3) {
-        "never"
-    } else {
-        "5"
-    }
+fun entryPoint(input: String): String {
+    val busDrivers= BusDriver.fromString(input).toSet()
+    val result = Gossip.numStopsToCompletelySpread(busDrivers)?.toString()
 
-
+    return  result ?: "never"
+}

@@ -1,8 +1,8 @@
 import io.kotlintest.shouldBe
 import io.kotlintest.specs.FreeSpec
 
-class GossipingBusDriverTest : FreeSpec({
-    "findFirstFullySpreadGossipStop" - {
+class MainTest : FreeSpec({
+    "numStopsToCompletelySpread" - {
         "can be fully distributed" {
             val schedule = """
                 3 1 2 3
@@ -10,7 +10,7 @@ class GossipingBusDriverTest : FreeSpec({
                 4 2 3 4 5
             """.trimIndent()
 
-            findFirstFullySpreadGossipStop(schedule) shouldBe "5"
+            entryPoint(schedule) shouldBe "5"
         }
 
         "can not be fully distributed" {
@@ -19,7 +19,7 @@ class GossipingBusDriverTest : FreeSpec({
                 5 2 8
             """.trimIndent()
 
-            findFirstFullySpreadGossipStop(schedule) shouldBe "never"
+            entryPoint(schedule) shouldBe "never"
         }
     }
 })

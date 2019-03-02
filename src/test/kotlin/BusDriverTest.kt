@@ -8,14 +8,14 @@ class BusDriverTest : FreeSpec({
         "it cycles back to the start again when it ends" {
             val route = stopsOf("1", "2")
             BusDriver(0, route)
-                .dailyRoute()
+                .dailyRoute
                 .take(5)
                 .toList() shouldBe stopsOf("1", "2", "1", "2", "1")
         }
 
         "it has total 481 stops" {
             forAll(30, Gen.busDriver()) { busDriver ->
-                busDriver.dailyRoute().count() == 481
+                busDriver.dailyRoute.count() == 481
             }
         }
     }
@@ -33,15 +33,15 @@ class BusDriverTest : FreeSpec({
         }
 
         "listen to gossips that the driver has already know should not change anything" {
-            forAll(genGossipsAndItsSubset) { (gossips, gossipSubset) ->
-                val busDriver = BusDriver(0, stopsOf(), gossips)
+            forAll(Gen.route(), genGossipsAndItsSubset) { route, (gossips, gossipSubset) ->
+                val busDriver = BusDriver(0, route, gossips)
                 busDriver.listen(gossipSubset).gossips == gossips
             }
         }
 
         "listen to new gossips should make driver know both new and old gossip" {
-            forAll(Gen.gossips(), Gen.gossips()) { gossipsA, gossipsB ->
-                val busDriver = BusDriver(0, stopsOf(), gossipsA)
+            forAll(Gen.gossips(), Gen.gossips(), Gen.route()) { gossipsA, gossipsB, route ->
+                val busDriver = BusDriver(0, route, gossipsA)
                 val gossipResult = busDriver.listen(gossipsB).gossips
 
                 gossipResult == gossipsA + gossipsB
