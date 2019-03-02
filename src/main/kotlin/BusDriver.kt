@@ -6,24 +6,20 @@ data class BusDriver(
     val gossips: Set<Gossip> = setOf(Gossip(id)),
     val numStop: Int = 1
 ) {
-    val dailyRoute: Sequence<Stop> = generateSequence { route }
-        .flatten()
-        .take(DAILY_STOPS)
+    val currentStop: Stop = route.first()
 
-    val currentStop = route.first()
-
-    fun move(): BusDriver? = if (numStop < DAILY_STOPS) {
+    fun move(): BusDriver? = withinStopQuota {
         copy(
             route = route.tail() + route.first(),
             numStop = numStop + 1
         )
-    } else {
-        null
     }
-
 
     fun listen(newGossip: Set<Gossip>): BusDriver =
         this.copy(gossips = gossips.union(newGossip))
+
+    private fun <T> withinStopQuota(f: () -> T): T? =
+        if (numStop < DAILY_STOPS) f() else null
 
     companion object {
         private const val DAILY_DRIVE_TIME = 480

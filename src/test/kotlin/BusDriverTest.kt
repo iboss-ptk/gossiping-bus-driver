@@ -4,18 +4,27 @@ import io.kotlintest.shouldBe
 import io.kotlintest.specs.FreeSpec
 
 class BusDriverTest : FreeSpec({
-    ".dailyRoute" - {
+    ".move" - {
         "it cycles back to the start again when it ends" {
             val route = stopsOf("1", "2")
             BusDriver(0, route)
-                .dailyRoute
-                .take(5)
-                .toList() shouldBe stopsOf("1", "2", "1", "2", "1")
+                .move()
+                ?.move()
+                ?.move()
+                ?.move()
+                ?.currentStop shouldBe Stop("1")
         }
 
-        "it has total 481 stops" {
-            forAll(30, Gen.busDriver()) { busDriver ->
-                busDriver.dailyRoute.count() == 481
+        "can move only when num stops less than 481" {
+            forAll(30, Gen.choose(1, 480), Gen.busDriver()) { numStop, busDriver ->
+                busDriver.copy(numStop = numStop).move() != null
+            }
+        }
+
+        "can not move when num stops greater than or equal 481" {
+            val genNumStops = Gen.nats().filter { it >= 481 }
+            forAll(30, genNumStops, Gen.busDriver()) { numStop, busDriver ->
+                busDriver.copy(numStop = numStop).move() == null
             }
         }
     }
