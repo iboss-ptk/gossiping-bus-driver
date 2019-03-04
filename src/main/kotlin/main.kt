@@ -4,7 +4,8 @@ fun main(args: Array<String>) {
 
 fun entryPoint(input: String): String {
     val busDrivers= BusDriver.fromString(input)
-    val result = Gossip.numStopsToCompletelySpread(busDrivers)?.toString()
+    val timeToCompletelySpreadGossip = BusDriver.timeToCompletelySpreadGossip(busDrivers)
+    val numStopsToCompletelySpreadGossip = timeToCompletelySpreadGossip?.plus(1)?.toString()
 
-    return  result ?: "never"
+    return  numStopsToCompletelySpreadGossip ?: "never"
 }

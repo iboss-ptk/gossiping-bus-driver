@@ -6,25 +6,12 @@ import io.kotlintest.specs.FreeSpec
 class BusDriverTest : FreeSpec({
     ".move" - {
         "it cycles back to the start again when it ends" {
-            val route = stopsOf("1", "2")
-            BusDriver(0, route)
-                .move()
-                ?.move()
-                ?.move()
-                ?.move()
-                ?.currentStop shouldBe Stop("1")
-        }
-
-        "can move only when num stops less than 481" {
-            forAll(30, Gen.choose(1, 480), Gen.busDriver()) { numStop, busDriver ->
-                busDriver.copy(numStop = numStop).move() != null
-            }
-        }
-
-        "can not move when num stops greater than or equal 481" {
-            val genNumStops = Gen.nats().filter { it >= 481 }
-            forAll(30, genNumStops, Gen.busDriver()) { numStop, busDriver ->
-                busDriver.copy(numStop = numStop).move() == null
+            forAll(50, Gen.route(), Gen.choose(0, BusDriver.DAILY_DRIVE_TIME_LIMIT)) { route, time ->
+                var busDriver = BusDriver(0, route)
+                repeat(time) {
+                    busDriver = busDriver.move()
+                }
+                busDriver.currentStop == route[time % route.size]
             }
         }
     }
@@ -100,6 +87,98 @@ class BusDriverTest : FreeSpec({
                 BusDriver(1, stopsOf("5", "2", "8", "6")),
                 BusDriver(2, stopsOf("6", "1", "4", "6", "5"))
             )
+        }
+    }
+
+    "#spreadGossip" - {
+        "numbers of bus drivers after spread the gossips should be the same as before" {
+            forAll(50, Gen.busDrivers()) { busDrivers ->
+                val gossipedBusDriver = BusDriver.spreadGossip(busDrivers)
+                busDrivers.size == gossipedBusDriver.size
+            }
+        }
+
+        "all bus drivers will know the same set of gossips" {
+            forAll(50, Gen.busDrivers()) { busDrivers ->
+                val gossipedBusDriver = BusDriver.spreadGossip(busDrivers)
+                val accumulatedGossips = busDrivers
+                    .flatMap { it.gossips }
+                    .toSet()
+
+                gossipedBusDriver.all { it.gossips == accumulatedGossips }
+            }
+        }
+    }
+
+    "#timeToCompletelySpreadGossip" - {
+        "completely spread at 1 when first stop of everyone is the same" {
+            val result = BusDriver.timeToCompletelySpreadGossip(
+                listOf(
+                    BusDriver(0, stopsOf("1", "4", "5"), setOf(Gossip(0))),
+                    BusDriver(1, stopsOf("1", "2"), setOf(Gossip(1))),
+                    BusDriver(2, stopsOf("1", "3", "5", "1"), setOf(Gossip(2)))
+                )
+            )
+
+            result shouldBe 0
+        }
+
+        "completely spread at n when nth stop of everyone is the same" {
+            val result = BusDriver.timeToCompletelySpreadGossip(
+                listOf(
+                    BusDriver(0, stopsOf("2", "3"), setOf(Gossip(0))),
+                    BusDriver(1, stopsOf("3"), setOf(Gossip(1))),
+                    BusDriver(2, stopsOf("6", "7", "8", "3"), setOf(Gossip(2)))
+                )
+            )
+
+            result shouldBe 3
+        }
+
+        "completely spread at minute 480 when nth stop of everyone is the same" {
+            // minute 480 is at stop 481
+            // prime factors of 481 are 13 x 37
+            val routes = listOf(
+                stopsOf((1..12).map { "$1-$it" }).plus(Stop("meet")),
+                stopsOf((1..36).map { "$2-$it" }).plus(Stop("meet"))
+            )
+
+            val result = BusDriver.timeToCompletelySpreadGossip(
+                routes.mapIndexed { id, route ->
+                    BusDriver(id, route, setOf(Gossip(id)))
+                }
+            )
+
+            result shouldBe 480
+        }
+
+        "never completely spread when the bus drivers can meet only at 481 minutes" {
+            // minute 481 is at stop 482
+            // prime factors of 482 are 2 x 241
+            val routes = listOf(
+                stopsOf((1..1).map { "$1-$it" }).plus(Stop("meet")),
+                stopsOf((1..240).map { "$2-$it" }).plus(Stop("meet"))
+            )
+
+            val result = BusDriver.timeToCompletelySpreadGossip(
+                routes.mapIndexed { id, route ->
+                    BusDriver(id, route, setOf(Gossip(id)))
+                }
+            )
+
+            result shouldBe null
+        }
+
+        "never completely spread when the bus drivers never met" {
+            val result = BusDriver.timeToCompletelySpreadGossip(
+                listOf(
+                    BusDriver(0, stopsOf("1", "2", "3"), setOf(Gossip(0))),
+                    BusDriver(1, stopsOf("4", "5"), setOf(Gossip(1))),
+                    BusDriver(2, stopsOf("6", "7", "8", "9"), setOf(Gossip(2)))
+                )
+            )
+
+            result shouldBe null
         }
     }
 })
