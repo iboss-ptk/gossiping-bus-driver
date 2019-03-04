@@ -111,7 +111,19 @@ class BusDriverTest : FreeSpec({
     }
 
     "#timeToCompletelySpreadGossip" - {
-        "completely spread at 1 when first stop of everyone is the same" {
+        "completely spread at 0 minute when there is no bus driver" {
+            val result = BusDriver.timeToCompletelySpreadGossip(listOf())
+            result shouldBe 0
+        }
+
+        "completely spread at 0 minute when there is one bus driver" {
+            forAll(Gen.busDriver()) { busDriver ->
+                val result = BusDriver.timeToCompletelySpreadGossip(listOf(busDriver))
+                result == 0
+            }
+        }
+
+        "completely spread at 1 minute when first stop of everyone is the same" {
             val result = BusDriver.timeToCompletelySpreadGossip(
                 listOf(
                     BusDriver(0, stopsOf("1", "4", "5"), setOf(Gossip(0))),
@@ -123,12 +135,12 @@ class BusDriverTest : FreeSpec({
             result shouldBe 0
         }
 
-        "completely spread at n when nth stop of everyone is the same" {
+        "completely spread if it after a group of bus driver have met each other, the rest meet all of that group" {
             val result = BusDriver.timeToCompletelySpreadGossip(
                 listOf(
-                    BusDriver(0, stopsOf("2", "3"), setOf(Gossip(0))),
-                    BusDriver(1, stopsOf("3"), setOf(Gossip(1))),
-                    BusDriver(2, stopsOf("6", "7", "8", "3"), setOf(Gossip(2)))
+                    BusDriver(0, stopsOf("1", "4", "5"), setOf(Gossip(0))),
+                    BusDriver(1, stopsOf("1", "2"), setOf(Gossip(1))),
+                    BusDriver(2, stopsOf("0", "3", "5", "2"), setOf(Gossip(2)))
                 )
             )
 
@@ -182,3 +194,4 @@ class BusDriverTest : FreeSpec({
         }
     }
 })
+
